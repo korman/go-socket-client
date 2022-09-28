@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"go_client/server"
+	"go_client/utils"
 	"net"
 	"testing"
 	"time"
