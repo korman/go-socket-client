@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 var instanse *NetworkManager
@@ -48,8 +49,10 @@ func (m *NetworkManager) RegisterMessageCallback(f func(net.Conn, []byte) error,
 	return nil
 }
 
-func (m *NetworkManager) StartServer() error {
-	println("启动了服务器……")
+func (m *NetworkManager) StartServer(ip string, port string) error {
+	println("连接到目标服务器……")
+
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:9898", 5*time.Second)
 
 	listener, err := net.Listen("tcp", ":9898")
 
