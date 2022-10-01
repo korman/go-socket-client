@@ -24,6 +24,10 @@ func TestPb(t *testing.T) {
 
 		marshel, err := proto.Marshal(sayHello)
 
+		if err != nil {
+			t.Error(err)
+		}
+
 		var lenth int = len(marshel)
 
 		var lenBytes = utils.IntToBytes(lenth)
@@ -36,10 +40,6 @@ func TestPb(t *testing.T) {
 		copy(tempBuf, lenBytes[0:lenInt])
 		copy(tempBuf[lenInt:msgInt+lenInt], msgBytes)
 		copy(tempBuf[lenInt+msgInt:], marshel)
-
-		if err != nil {
-			t.Error(err)
-		}
 
 		conn.Write(tempBuf)
 	}

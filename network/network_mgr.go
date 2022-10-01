@@ -54,27 +54,14 @@ func (m *NetworkManager) StartServer(ip string, port string) error {
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:9898", 5*time.Second)
 
-	listener, err := net.Listen("tcp", ":9898")
-
 	if err != nil {
 		return err
 	}
 
-	defer listener.Close()
+	raddr := conn.RemoteAddr().String()
+	println("我连上了... %s", raddr)
 
-	for {
-		conn, err := listener.Accept()
-
-		if err != nil {
-			println("连接失败")
-			break
-		}
-
-		raddr := conn.RemoteAddr().String()
-		println("有人连我了... %s", raddr)
-
-		go m.connHandle(conn)
-	}
+	m.connHandle(conn)
 
 	return nil
 }
@@ -86,7 +73,7 @@ func (m *NetworkManager) parseData(conn net.Conn, b []byte, packs []*server.SayR
 	var err error = nil
 
 	if n <= 16 {
-		return nil, errors.New("包调小")
+		return nil, errors.New("包太小")
 	}
 
 	if n > 16 {
