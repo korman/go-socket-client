@@ -1,9 +1,9 @@
 package routes
 
 import (
+	"errors"
 	"go_client/network"
 	"go_client/server"
-	"go_client/utils"
 	"net"
 
 	"google.golang.org/protobuf/proto"
@@ -11,6 +11,12 @@ import (
 
 func InitRoutes() error {
 	err := network.NetworkMgrInstance().RegisterMessageCallback(processHeartbeatFunction, 1)
+
+	if err != nil {
+		println(err)
+	}
+
+	err = network.NetworkMgrInstance().RegisterMessageCallback(processRegisterMessage, 2)
 
 	if err != nil {
 		println(err)
@@ -31,29 +37,39 @@ func processHeartbeatFunction(conn net.Conn, b []byte) error {
 	println("服务器给我说:%v", sayReq.Text)
 
 	sayHello := &server.SayReq{
-		Text: "Yes!I'm Alive",
+		Text: "Yes!I'm Alive,But Im robot",
 	}
 
 	marshel, err := proto.Marshal(sayHello)
 
 	if err != nil {
-		println(err)
+		return err
 	}
 
-	var lenth int = len(marshel)
+	err = network.NetworkMgrInstance().SendToClient(1, marshel)
 
-	var lenBytes = utils.IntToBytes(lenth)
-	var msgBytes = utils.IntToBytes(1)
-	var lenInt = len(lenBytes)
-	var msgInt = len(msgBytes)
+	if err != nil {
+		return err
+	}
 
-	var tempBuf = make([]byte, lenth+lenInt+msgInt)
+	return nil
+}
 
-	copy(tempBuf, lenBytes[0:lenInt])
-	copy(tempBuf[lenInt:msgInt+lenInt], msgBytes)
-	copy(tempBuf[lenInt+msgInt:], marshel)
+func processRegisterMessage(conn net.Conn, b []byte) error {
+	resultReply := &server.RegisterReply{}
 
-	conn.Write(tempBuf)
+	err := proto.Unmarshal(b, resultReply)
+
+	if err != nil {
+		return err
+	}
+
+	if resultReply.Result == server.RegisterResult_REG_DUPLICATE {
+		println(err)
+		return errors.New("注册失败")
+	}
+
+	println("注册成功")
 
 	return nil
 }

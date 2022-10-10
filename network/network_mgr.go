@@ -3,7 +3,6 @@ package network
 import (
 	"errors"
 	"fmt"
-	"go_client/server"
 	"go_client/utils"
 	"io"
 	"net"
@@ -18,6 +17,7 @@ type NetworkManager struct {
 	readBytes   int
 	tempBuffer  []byte
 	callbackMap map[int64]func(net.Conn, []byte) error
+	ClientConn  net.Conn
 }
 
 func NetworkMgrInstance() *NetworkManager {
@@ -29,10 +29,30 @@ func NetworkMgrInstance() *NetworkManager {
 				readBytes:   0,
 				tempBuffer:  nil,
 				callbackMap: make(map[int64]func(net.Conn, []byte) error),
+				ClientConn:  nil,
 			}
 		}
 	}
 	return instanse
+}
+
+func (m *NetworkManager) StartServer(ip string, port string) error {
+	println("连接到目标服务器……")
+
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:9898", 5*time.Second)
+
+	if err != nil {
+		return err
+	}
+
+	m.ClientConn = conn
+
+	raddr := conn.RemoteAddr().String()
+	println("我连上了... %s", raddr)
+
+	go m.connHandle(conn)
+
+	return nil
 }
 
 func (m *NetworkManager) RegisterMessageCallback(f func(net.Conn, []byte) error, msgId int64) error {
@@ -49,24 +69,30 @@ func (m *NetworkManager) RegisterMessageCallback(f func(net.Conn, []byte) error,
 	return nil
 }
 
-func (m *NetworkManager) StartServer(ip string, port string) error {
-	println("连接到目标服务器……")
+func (m *NetworkManager) SendToClient(msgId int, byDatas []byte) error {
+	var lenth int = len(byDatas)
 
-	conn, err := net.DialTimeout("tcp", "127.0.0.1:9898", 5*time.Second)
+	var lenBytes = utils.IntToBytes(lenth)
+	var msgBytes = utils.IntToBytes(msgId)
+	var lenInt = len(lenBytes)
+	var msgInt = len(msgBytes)
+
+	var tempBuf = make([]byte, lenth+lenInt+msgInt)
+
+	copy(tempBuf, lenBytes[0:lenInt])
+	copy(tempBuf[lenInt:msgInt+lenInt], msgBytes)
+	copy(tempBuf[lenInt+msgInt:], byDatas)
+
+	_, err := m.ClientConn.Write(tempBuf)
 
 	if err != nil {
 		return err
 	}
 
-	raddr := conn.RemoteAddr().String()
-	println("我连上了... %s", raddr)
-
-	m.connHandle(conn)
-
 	return nil
 }
 
-func (m *NetworkManager) parseData(conn net.Conn, b []byte, packs []*server.SayReq) ([]byte, error) {
+func (m *NetworkManager) parseData(conn net.Conn, b []byte) ([]byte, error) {
 	n := len(b)
 	packLen := 0
 	msgId := 0
@@ -91,6 +117,7 @@ func (m *NetworkManager) parseData(conn net.Conn, b []byte, packs []*server.SayR
 		copy(msgIdPack, b[8:16])
 
 		msgId = utils.BytesToInt(msgIdPack)
+		fmt.Printf("收到%d的消息", msgId)
 	} else {
 		err = errors.New("不够一个包")
 		return b, err
@@ -109,7 +136,7 @@ func (m *NetworkManager) parseData(conn net.Conn, b []byte, packs []*server.SayR
 
 		if n-(packLen+16) > 0 {
 			fmt.Printf("有溢出%d,此包大小%d\n", n-(packLen+16), packLen)
-			err, tempBuf := m.parseData(conn, b[packLen+16:], packs)
+			err, tempBuf := m.parseData(conn, b[packLen+16:])
 
 			if err != nil {
 				return err, tempBuf
@@ -134,35 +161,25 @@ func (m *NetworkManager) connHandle(conn net.Conn) {
 			break
 		}
 
-		packs := make([]*server.SayReq, 0)
-
 		var fullBuffer []byte = nil
 
 		if m.tempBuffer == nil {
 			fullBuffer = make([]byte, n)
 			copy(fullBuffer, buf[0:n])
 		} else {
-			println("有结余消息:%d", len(m.tempBuffer))
 			fullBuffer = make([]byte, n+len(m.tempBuffer))
 			copy(fullBuffer, m.tempBuffer)
 			copy(fullBuffer[len(m.tempBuffer):], buf[0:n])
 		}
 
-		println("读取了%d字节", n)
-
 		if err != nil {
 			return
 		}
 
-		tempBuf, err := m.parseData(conn, fullBuffer, packs)
+		tempBuf, err := m.parseData(conn, fullBuffer)
 
 		if err != nil {
-			println(err)
-
-			println("剩下%d个字节", len(tempBuf))
-
 			if len(tempBuf) > 0 {
-				println("需要中间存储,余下%d字节", len(tempBuf))
 				m.tempBuffer = make([]byte, len(tempBuf))
 				copy(m.tempBuffer, tempBuf)
 			} else {
