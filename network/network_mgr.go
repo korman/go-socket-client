@@ -47,9 +47,6 @@ func (m *NetworkManager) StartServer(ip string, port string) error {
 
 	m.ClientConn = conn
 
-	raddr := conn.RemoteAddr().String()
-	println("我连上了... %s", raddr)
-
 	go m.connHandle(conn)
 
 	return nil
@@ -98,11 +95,11 @@ func (m *NetworkManager) parseData(conn net.Conn, b []byte) ([]byte, error) {
 	msgId := 0
 	var err error = nil
 
-	if n <= 16 {
+	if n < 16 {
 		return nil, errors.New("包太小")
 	}
 
-	if n > 16 {
+	if n >= 16 {
 		packLenPack := make([]byte, 8)
 
 		copy(packLenPack, b[:8])

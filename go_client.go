@@ -5,6 +5,7 @@ import (
 	"go_client/routes"
 	"go_client/server"
 	"go_client/signals"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -23,6 +24,8 @@ func main() {
 	if err != nil {
 		println(err)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	err = processLogic()
 
