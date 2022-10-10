@@ -112,6 +112,7 @@ func (LockResult) EnumDescriptor() ([]byte, []int) {
 	return file_pb_cs_logic_proto_rawDescGZIP(), []int{1}
 }
 
+// 2
 type RegisterReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -167,6 +168,7 @@ func (x *RegisterReq) GetPass() string {
 	return ""
 }
 
+// 2
 type RegisterReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -222,6 +224,7 @@ func (x *RegisterReply) GetErrorMessage() string {
 	return ""
 }
 
+// 3
 type LockNodeReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -269,6 +272,7 @@ func (x *LockNodeReq) GetLockNode() *Node {
 	return nil
 }
 
+// 3
 type LockNodeReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -324,6 +328,7 @@ func (x *LockNodeReply) GetErrorMessage() string {
 	return ""
 }
 
+// 4
 type InputTextReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -371,6 +376,7 @@ func (x *InputTextReq) GetInputText() *InputText {
 	return nil
 }
 
+// 4
 type InputTextReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

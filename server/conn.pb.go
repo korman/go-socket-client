@@ -20,6 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 1
 type SayReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -67,6 +68,7 @@ func (x *SayReq) GetText() string {
 	return ""
 }
 
+// 1
 type SayReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
