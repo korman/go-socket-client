@@ -106,10 +106,6 @@ func (m *NetworkManager) parseData(conn net.Conn, b []byte) ([]byte, error) {
 
 		packLen = utils.BytesToInt(packLenPack)
 
-		if packLen == 0 {
-			return nil, errors.New("包大小为0")
-		}
-
 		msgIdPack := make([]byte, 8)
 		copy(msgIdPack, b[8:16])
 

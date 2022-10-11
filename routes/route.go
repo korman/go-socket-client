@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go_client/network"
 	"go_client/server"
+	"go_client/signals"
 	"net"
 
 	"google.golang.org/protobuf/proto"
@@ -17,6 +18,18 @@ func InitRoutes() error {
 	}
 
 	err = network.NetworkMgrInstance().RegisterMessageCallback(processRegisterMessage, 2)
+
+	if err != nil {
+		println(err)
+	}
+
+	err = network.NetworkMgrInstance().RegisterMessageCallback(processInitMapMessage, 11)
+
+	if err != nil {
+		println(err)
+	}
+
+	err = network.NetworkMgrInstance().RegisterMessageCallback(processLockNodeReplyMessage, 3)
 
 	if err != nil {
 		println(err)
@@ -70,6 +83,53 @@ func processRegisterMessage(conn net.Conn, b []byte) error {
 	}
 
 	println("注册成功")
+
+	return nil
+}
+
+func processInitMapMessage(conn net.Conn, b []byte) error {
+	initMapInfo := new(server.InitMapInfo)
+
+	err := proto.Unmarshal(b, initMapInfo)
+
+	if err != nil {
+		return err
+	}
+
+	lockNode := &server.Node{
+		X: 1,
+		Y: 1,
+	}
+
+	var lockReq *server.LockNodeReq = &server.LockNodeReq{
+		LockNode: lockNode,
+	}
+
+	sendData, err := proto.Marshal(lockReq)
+
+	if err != nil {
+		return err
+	}
+
+	return network.NetworkMgrInstance().SendToClient(3, sendData)
+}
+
+func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
+	lockResult := new(server.LockNodeReply)
+
+	err := proto.Unmarshal(b, lockResult)
+
+	if err != nil {
+		return err
+	}
+
+	if lockResult.Result != server.LockResult_LOCK_SUCCEEDED {
+		println("锁定节点失败")
+	}
+
+	println("锁定节点成功")
+
+	signals.ExitSig <- 0
 
 	return nil
 }
