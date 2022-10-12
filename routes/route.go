@@ -5,6 +5,7 @@ import (
 	"go_client/network"
 	"go_client/server"
 	"net"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -31,6 +32,12 @@ func InitRoutes() error {
 	}
 
 	err = network.NetworkMgrInstance().RegisterMessageCallback(processLockNodeReplyMessage, 3)
+
+	if err != nil {
+		println(err)
+	}
+
+	err = network.NetworkMgrInstance().RegisterMessageCallback(processInputTextReplyMessage, 4)
 
 	if err != nil {
 		println(err)
@@ -98,8 +105,9 @@ func processInitMapMessage(conn net.Conn, b []byte) error {
 	}
 
 	lockNode := &server.Node{
-		X: 1,
-		Y: 1,
+		X:     1,
+		Y:     1,
+		State: server.LockStatus_LOCKED_NODE,
 	}
 
 	var lockReq *server.LockNodeReq = &server.LockNodeReq{
@@ -128,11 +136,47 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 		return errors.New("锁定节点失败")
 	}
 
+	time.Sleep(1 * time.Second)
+
 	lockResult.LockedNode.Text = inputText[:1]
 
 	inputMsg := new(server.InputTextReq)
 
 	inputMsg.InputNode = lockResult.LockedNode
+
+	bt, err := proto.Marshal(inputMsg)
+
+	if err != nil {
+		return nil
+	}
+
+	return network.NetworkMgrInstance().SendToClient(4, bt)
+}
+
+func processInputTextReplyMessage(conn net.Conn, b []byte) error {
+	inputResult := new(server.InputTextReply)
+
+	err := proto.Unmarshal(b, inputResult)
+
+	if err != nil {
+		return err
+	}
+
+	if inputResult.Result != server.LockResult_LOCK_SUCCEEDED {
+		return errors.New("输入失败")
+	}
+
+	if len(inputResult.InputedNode.Text) == len(inputText) {
+		return nil
+	}
+
+	time.Sleep(1 * time.Second)
+
+	inputResult.InputedNode.Text = inputText[:len(inputResult.InputedNode.Text)+1]
+
+	inputMsg := new(server.InputTextReq)
+
+	inputMsg.InputNode = inputResult.InputedNode
 
 	bt, err := proto.Marshal(inputMsg)
 
