@@ -4,7 +4,6 @@ import (
 	"errors"
 	"go_client/network"
 	"go_client/server"
-	"go_client/signals"
 	"net"
 
 	"google.golang.org/protobuf/proto"
@@ -124,12 +123,8 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 	}
 
 	if lockResult.Result != server.LockResult_LOCK_SUCCEEDED {
-		println("锁定节点失败")
+		return errors.New("锁定节点失败")
 	}
-
-	println("锁定节点成功")
-
-	signals.ExitSig <- 0
 
 	return nil
 }
