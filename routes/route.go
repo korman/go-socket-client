@@ -9,6 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var inputText string = "Hello World!"
+
 func InitRoutes() error {
 	err := network.NetworkMgrInstance().RegisterMessageCallback(processHeartbeatFunction, 1)
 
@@ -126,5 +128,17 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 		return errors.New("锁定节点失败")
 	}
 
-	return nil
+	lockResult.LockedNode.Text = inputText[:1]
+
+	inputMsg := new(server.InputTextReq)
+
+	inputMsg.InputNode = lockResult.LockedNode
+
+	bt, err := proto.Marshal(inputMsg)
+
+	if err != nil {
+		return nil
+	}
+
+	return network.NetworkMgrInstance().SendToClient(4, bt)
 }
