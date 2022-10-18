@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"go_client/server"
+	"go_client/gate"
 	"go_client/utils"
 	"net"
 	"testing"
@@ -18,7 +18,7 @@ func TestPb(t *testing.T) {
 	}
 
 	for i := 0; i < 1; i++ {
-		sayHello := &server.SayReq{
+		sayHello := &gate.SayReq{
 			Text: "fff",
 		}
 

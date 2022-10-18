@@ -2,8 +2,8 @@ package routes
 
 import (
 	"errors"
+	"go_client/gate"
 	"go_client/network"
-	"go_client/server"
 	"net"
 	"time"
 
@@ -47,7 +47,7 @@ func InitRoutes() error {
 }
 
 func processHeartbeatFunction(conn net.Conn, b []byte) error {
-	sayReq := &server.SayReq{}
+	sayReq := &gate.SayReq{}
 
 	err := proto.Unmarshal(b, sayReq)
 
@@ -57,7 +57,7 @@ func processHeartbeatFunction(conn net.Conn, b []byte) error {
 
 	println("服务器给我说:%v", sayReq.Text)
 
-	sayHello := &server.SayReq{
+	sayHello := &gate.SayReq{
 		Text: "Yes!I'm Alive,But Im robot",
 	}
 
@@ -77,7 +77,7 @@ func processHeartbeatFunction(conn net.Conn, b []byte) error {
 }
 
 func processRegisterMessage(conn net.Conn, b []byte) error {
-	resultReply := &server.RegisterReply{}
+	resultReply := &gate.RegisterReply{}
 
 	err := proto.Unmarshal(b, resultReply)
 
@@ -85,7 +85,7 @@ func processRegisterMessage(conn net.Conn, b []byte) error {
 		return err
 	}
 
-	if resultReply.Result == server.RegisterResult_REG_DUPLICATE {
+	if resultReply.Result == gate.RegisterResult_REG_DUPLICATE {
 		println(err)
 		return errors.New("注册失败")
 	}
@@ -96,7 +96,7 @@ func processRegisterMessage(conn net.Conn, b []byte) error {
 }
 
 func processInitMapMessage(conn net.Conn, b []byte) error {
-	initMapInfo := new(server.InitMapInfo)
+	initMapInfo := new(gate.InitMapInfo)
 
 	err := proto.Unmarshal(b, initMapInfo)
 
@@ -104,13 +104,13 @@ func processInitMapMessage(conn net.Conn, b []byte) error {
 		return err
 	}
 
-	lockNode := &server.Node{
+	lockNode := &gate.Node{
 		X:     1,
 		Y:     1,
-		State: server.LockStatus_LOCKED_NODE,
+		State: gate.LockStatus_LOCKED_NODE,
 	}
 
-	var lockReq *server.LockNodeReq = &server.LockNodeReq{
+	var lockReq *gate.LockNodeReq = &gate.LockNodeReq{
 		LockNode: lockNode,
 	}
 
@@ -124,7 +124,7 @@ func processInitMapMessage(conn net.Conn, b []byte) error {
 }
 
 func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
-	lockResult := new(server.LockNodeReply)
+	lockResult := new(gate.LockNodeReply)
 
 	err := proto.Unmarshal(b, lockResult)
 
@@ -132,7 +132,7 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 		return err
 	}
 
-	if lockResult.Result != server.LockResult_LOCK_SUCCEEDED {
+	if lockResult.Result != gate.LockResult_LOCK_SUCCEEDED {
 		return errors.New("锁定节点失败")
 	}
 
@@ -140,7 +140,7 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 
 	lockResult.LockedNode.Text = inputText[:1]
 
-	inputMsg := new(server.InputTextReq)
+	inputMsg := new(gate.InputTextReq)
 
 	inputMsg.InputNode = lockResult.LockedNode
 
@@ -154,7 +154,7 @@ func processLockNodeReplyMessage(conn net.Conn, b []byte) error {
 }
 
 func processInputTextReplyMessage(conn net.Conn, b []byte) error {
-	inputResult := new(server.InputTextReply)
+	inputResult := new(gate.InputTextReply)
 
 	err := proto.Unmarshal(b, inputResult)
 
@@ -162,7 +162,7 @@ func processInputTextReplyMessage(conn net.Conn, b []byte) error {
 		return err
 	}
 
-	if inputResult.Result != server.LockResult_LOCK_SUCCEEDED {
+	if inputResult.Result != gate.LockResult_LOCK_SUCCEEDED {
 		return errors.New("输入失败")
 	}
 
@@ -174,7 +174,7 @@ func processInputTextReplyMessage(conn net.Conn, b []byte) error {
 
 	inputResult.InputedNode.Text = inputText[:len(inputResult.InputedNode.Text)+1]
 
-	inputMsg := new(server.InputTextReq)
+	inputMsg := new(gate.InputTextReq)
 
 	inputMsg.InputNode = inputResult.InputedNode
 

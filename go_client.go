@@ -1,9 +1,9 @@
 package main
 
 import (
+	"go_client/gate"
 	"go_client/network"
 	"go_client/routes"
-	"go_client/server"
 	"go_client/signals"
 	"time"
 
@@ -40,7 +40,7 @@ func main() {
 }
 
 func processLogic() error {
-	registerReq := &server.RegisterReq{
+	registerReq := &gate.RegisterReq{
 		Name: "Robot",
 	}
 
